@@ -26,6 +26,14 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
         title: 'NDA Runndev - dev',
         template: 'index.html'
       }),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.join(__dirname, 'assets'),
+            to: '.'
+          }
+        ]
+      })
     ],
     output: {
       filename: 'bundle.js',
