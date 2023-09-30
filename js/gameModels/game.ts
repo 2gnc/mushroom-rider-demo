@@ -8,7 +8,6 @@ import { VideoBg } from './videoBg';
 import { Intro } from './intro';
 import { GameStats } from './gameStats';
 import { Environment } from './gameEnv'; 
-import { Obstacle } from './obstacle';
 
 import { checkIsSirclesIntersected } from '../helpers/checkIsCirclesIntercected';
 
@@ -32,6 +31,9 @@ export type EnemyT = {
   speed: GameSpeedEnum;
   sX: number;
   sY: number;
+  spawnTimeout: number;
+  isQueuedToRender: boolean;
+  isRendered: boolean;
 }
 
 export type GameScoreT = {
@@ -50,19 +52,19 @@ export type EnemySpawnSettingT = {
 const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
   [GameSpeedEnum.x1]: {
     playbackSpeed: 1.0,
-    maxEnemies: 2,
-    enemyFrequency: 4 * 1000,
+    maxEnemies: 6,
+    enemyFrequency: 10 * 1000,
     hit: 5,
   },
   [GameSpeedEnum.x2]: {
     playbackSpeed: 2.0,
-    maxEnemies: 4,
-    enemyFrequency: 3 * 1000,
+    maxEnemies: 15,
+    enemyFrequency: 5 * 1000,
     hit: 10,
   },
   [GameSpeedEnum.x3]: {
     playbackSpeed: 2.5,
-    maxEnemies: 6,
+    maxEnemies: 20,
     enemyFrequency: 2 * 1000,
     hit: 15,
   },
@@ -93,7 +95,7 @@ export class Game {
     this.lifesycleState = GameLifesycleEnum.starting;
     this.isPaused = false;
     this.stats = new GameStats(width, height);
-    this.env = new Environment(width, height, this.hitAxisHeight);
+    this.env = new Environment(width, height, this.hitAxisHeight, this);
     this.bg = new VideoBg(width, height);
     this.intro = new Intro(width, height);
     this.score = {
@@ -135,6 +137,9 @@ export class Game {
         speed: this.score.speed,
         sX: area.x,
         sY: area.y,
+        spawnTimeout: random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency),
+        isQueuedToRender: false,
+        isRendered: false,
       }
 
       this.occupiedAreas.push(area);
@@ -142,7 +147,7 @@ export class Game {
       remainsToGenerate --;
     }
 
-    console.log(this)
+    console.log(this.enemiesQueue);
   }
 
   pause = () => {
