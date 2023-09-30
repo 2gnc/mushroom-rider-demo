@@ -2,6 +2,8 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+const isDev = process.env.NODE_ENV === 'development';
+
   module.exports = {
   entry: './js/index.ts',
    devtool: 'inline-source-map',
@@ -23,7 +25,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
     },
     plugins: [
       new HtmlWebpackPlugin({
-        title: 'NDA Runndev - dev',
+        title: isDev ? 'dev' : 'NDA Runndev - mvp',
         template: 'index.html'
       }),
       new CopyWebpackPlugin({

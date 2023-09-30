@@ -36,7 +36,7 @@ export class Intro {
     }
 
     const header = document.createElement('div');
-    header.innerText = 'NDA Rider';
+    header.innerText = 'Mushroom Rider';
     header.className = 'gameHeader';
     document.body.appendChild(header);
     this.header = header;

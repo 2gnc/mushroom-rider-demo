@@ -20,14 +20,13 @@ export class VideoBg {
     this.video.addEventListener('loadedmetadata', () => {
     this.video.muted = true;
     this.video.loop = true;
+    this.video.playsInline = true;
     this.update();
   });
   }
 
   update = () => {
     const frameOffsetX = (this.video.videoWidth / 2) - (this.width / 2) + 150;
-    const videoRatio = this.video.videoWidth / this.video.videoHeight;
-    const viewportRatio = this.width / this.height;
     const deltaHeight = this.height - this.video.videoHeight;
     const deltaHeightPers = deltaHeight / (this.video.videoHeight / 100);
 
