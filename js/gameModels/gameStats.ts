@@ -1,14 +1,17 @@
+import { GameScoreT } from './game';
 export class GameStats {
   private canvas: HTMLCanvasElement;
   private heartSprite: HTMLImageElement;
+  private score: GameScoreT;
 
-  constructor(width: number, height: number) {
+  constructor(width: number, height: number, score: GameScoreT) {
     this.canvas = document.createElement('canvas');
     this.canvas.width = width;
     this.canvas.height = height;
     this.canvas.className = 'gameStats';
     this.heartSprite = new Image();
     this.heartSprite.src = './lifeSprite.png';
+    this.score = score;
   }
 
   initialize() {
@@ -45,23 +48,30 @@ export class GameStats {
       drawFrameheight);
   }
 
-  renderHealth = (healthPercent: number) => {
+  renderHealth = () => {
+    const healthPercent = this.score.health;
     let spriteOffsetX = 0;
-    if (healthPercent === 0) {
+    if (healthPercent <= 0) {
       spriteOffsetX = 200;
     } else if(healthPercent <= 50) {
       spriteOffsetX = 100;
     }
-    console.log(this.canvas)
+
+    
     const heartFrameW = 100;
     const heartFrameH = 80;
-    const heartPosX = this.canvas.width - 40;
+    const heartPosX = this.canvas.width - 50;
     const heartPosY = 10;
-    const height = 80
     const heartW = 30;
     const heartH  = 20;
+    
+    this.ctx.font = 'bold 16pt monospace';
+    this.ctx.fillStyle = 'red';
 
-    this.ctx.clearRect(this.canvas.width - 50, this.canvas.height - 50, 150, height);
+    const health =  this.score.health < 0 ? 0 : this.score.health;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawSprite(this.heartSprite, spriteOffsetX, 0, heartFrameW, heartFrameH, heartPosX, heartPosY, heartW, heartH);
+    this.ctx.fillText(`${health.toString()}%`, heartPosX - 5 , heartPosY + 45);
   }
 }

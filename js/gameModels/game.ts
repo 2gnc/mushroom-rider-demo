@@ -9,6 +9,8 @@ import { VideoBg } from './videoBg';
 import { Intro } from './intro';
 import { GameStats } from './gameStats';
 import { Environment } from './gameEnv'; 
+import { Score } from './score';
+import { EnemyT } from './enemy';
 
 import { checkIsSirclesIntersected } from '../helpers/checkIsCirclesIntercected';
 
@@ -24,18 +26,6 @@ export enum GameSpeedEnum {
   x1 = 'x1',
   x2 = 'x2',
   x3 = 'x3',
-}
-
-export type EnemyT = {
-  id: string;
-  hit: number;
-  speed: GameSpeedEnum;
-  sX: number;
-  sY: number;
-  spawnTimeout: number;
-  isQueuedToRender: boolean;
-  isRendered: boolean;
-  image: string;
 }
 
 export type GameScoreT = {
@@ -54,9 +44,9 @@ export type EnemySpawnSettingT = {
 const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
   [GameSpeedEnum.x1]: {
     playbackSpeed: 1.0,
-    maxEnemies: 6,
+    maxEnemies: 1,
     enemyFrequency: 10 * 1000,
-    hit: 5,
+    hit: 65,
   },
   [GameSpeedEnum.x2]: {
     playbackSpeed: 2.0,
@@ -74,6 +64,7 @@ const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
 
 const HIT_AREA_HEIGHT = 0.1;
 const ENEMY_RADIUS = 25;
+const FIRST_ENEMY_TIMEOUT = 40;
 
 export class Game {
   lifesycleState: GameLifesycleEnum;
@@ -94,17 +85,17 @@ export class Game {
   ) {
     this.width = width;
     this.height = height;
-    this.lifesycleState = GameLifesycleEnum.starting;
-    this.isPaused = false;
-    this.stats = new GameStats(width, height);
-    this.env = new Environment(width, height, this.hitAxisHeight, this);
-    this.bg = new VideoBg(width, height);
-    this.intro = new Intro(width, height);
     this.score = {
       total: 0,
       speed: GameSpeedEnum.x1,
       health: 100,
     };
+    this.lifesycleState = GameLifesycleEnum.starting;
+    this.isPaused = false;
+    this.stats = new GameStats(width, height, this.score);
+    this.env = new Environment(width, height, this.hitAxisHeight, this);
+    this.bg = new VideoBg(width, height);
+    this.intro = new Intro(width, height);
     this.enemiesQueue = {};
     this.occupiedAreas = {};
   } 
@@ -122,40 +113,49 @@ export class Game {
     this.bg.initialize();
     this.stats.initialize();
     this.env.initialize();
-    this.stats.renderHealth(100);
+    this.stats.renderHealth();
     this.bg.play();
     this.lifesycleState = GameLifesycleEnum.playing;
     this.populateEnemiesLoop();
   }
 
   populateEnemiesLoop = (): void => {
-    console.log('populateEnemiesLoop')
+    if (this.lifesycleState === GameLifesycleEnum.score) {
+      return;
+    }
     let remainsToGenerate = ENEMIES_SETTINGS[this.score.speed].maxEnemies - size(this.enemiesQueue);
     if (size(this.enemiesQueue) >= ENEMIES_SETTINGS[this.score.speed].maxEnemies) {
       return;
     }
     while (remainsToGenerate > 0) {
+      const isFirst = remainsToGenerate === ENEMIES_SETTINGS[this.score.speed].maxEnemies;
+      
       remainsToGenerate = remainsToGenerate - 1;
-      const area = this.enemySpawnArea;
-      const spawnTimeout = remainsToGenerate === ENEMIES_SETTINGS[this.score.speed].maxEnemies ? 40 : random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency);
+      
       const enemyId = nanoid();
+      const enemy = this.buildEnemy(enemyId, isFirst);
+      
+      this.occupiedAreas[enemyId] = enemy.area;
+      this.enemiesQueue[enemy.id] = enemy;
+      }
+    }
+    
+    buildEnemy = (id: string, isFirst: boolean): EnemyT => {
+      const area = this.enemySpawnArea;
+      const spawnTimeout = isFirst ? FIRST_ENEMY_TIMEOUT : random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency);
 
-      const enemy: EnemyT = {
-        id: enemyId,
+      return {
+        id,
         hit: ENEMIES_SETTINGS[this.score.speed].hit,
         speed: this.score.speed,
-        sX: area.x,
-        sY: area.y,
+        area,
         spawnTimeout,
         isQueuedToRender: false,
         isRendered: false,
         image: random(1, 50).toString(),
-      }
-
-      this.occupiedAreas[enemyId] = area;
-      this.enemiesQueue[enemy.id] = enemy;
+        bonus: random(1, 10),
+      };
     }
-  }
 
   pause = () => {
     this.isPaused = true;
@@ -198,7 +198,7 @@ export class Game {
   buildRandomSpawnPoint(): GameObjectCoordsT {
     return {
       x: random(ENEMY_RADIUS * 1.5, this.width - ENEMY_RADIUS * 1.5),
-      y: random(this.width * 0.6, this.hitAxisHeight - 100),
+      y: random(this.height * 0.1, this.hitAxisHeight - 250),
     }
   }
 
@@ -208,5 +208,24 @@ export class Game {
 
   clearOccupiedAreas = (enemyId: string): void => {
     delete this.occupiedAreas[enemyId];
+  }
+
+  updateScore = (amount?: number) => {
+    if (this.score.health <= 0) {
+      this.stopGame();
+    }
+    if (amount) {
+      this.score.total += amount;
+    }
+    this.stats.renderHealth();
+  }
+
+  stopGame = () => {
+    this.lifesycleState = GameLifesycleEnum.score;
+    this.bg.pause();
+    this.env.stopLooping();
+    const scoreScreen = new Score(this.width, this.height, this.score);
+    scoreScreen.initialize();
+    scoreScreen.drawScore();
   }
 }

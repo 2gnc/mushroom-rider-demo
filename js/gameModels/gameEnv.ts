@@ -1,21 +1,20 @@
 import Konva from 'konva';
 import filter from 'lodash/filter';
 import forEach from 'lodash/forEach';
-import chain from 'lodash/chain';
-import map from 'lodash/map';
 import size from 'lodash/size';
 import values from 'lodash/values';
 
-import { Game, EnemyT } from './game';
+import { Game } from './game';
+import { EnemyT } from './enemy';
 
 export const ENEMY_UPDATE_INTERVAL = 1000;
-
+const ANIMATION_VELOCITY = 50;
 export class Environment {
   private canvas: HTMLCanvasElement;
   private stage: Konva.Stage;
-  private layer: Konva.Layer;
   private deadlineAxis: number;
   private game: Game;
+  private loop: NodeJS.Timeout | null;
 
   constructor(width: number, height: number, deadlineAxis: number, game: Game) {
     this.deadlineAxis = deadlineAxis;
@@ -28,15 +27,13 @@ export class Environment {
       width,
       height
     });
-    this.layer = new Konva.Layer();
     this.game = game;
-
-    this.stage.add(this.layer);
+    this.loop = null;
   }
   
   initialize() {
     document.body.appendChild(this.canvas);
-    setInterval(() => {
+    this.loop = setInterval(() => {
       this.queueEnemiesToRender();
     }, ENEMY_UPDATE_INTERVAL);
   }
@@ -62,32 +59,92 @@ export class Environment {
     this.game.enemiesQueue[enemy.id].isRendered = true;
     delete this.game.enemiesQueue[enemy.id];
 
+    const layer = new Konva.Layer();
+
     const imageObj = new Image();
-    imageObj.onload = () => {
-      const image = new Konva.Image({
-        x: enemy.sX,
-        y: enemy.sY,
-        image: imageObj,
-        width: 55,
-        height: 55,
-      });
-      this.layer.add(image);
+    const image = new Konva.Image({
+      x: enemy.area.x,
+      y: enemy.area.y,
+      image: imageObj,
+      width: 55,
+      height: 55,
+      shadowColor: 'black',
+      shadowBlur: 10,
+      shadowOffset: { x: 5, y: 5 },
+      shadowOpacity: 0.3,
+    });
+    layer.add(image);
 
-      const handleDestroy = () => {
-        this.destroyEnemy(image, enemy.id);
-        image.off('pointerdblclick', handleDestroy);
+    const distance = 300;
+    const duration = 6 * 1000;
+
+    const animation = new Konva.Animation((frame) => {
+      if (!frame) {
+        return;
+      }
+      image.y(
+        distance * Math.sin((frame.time * 2 * Math.PI) / duration) + enemy.area.y
+      );
+    }, layer)
+
+    const growA = new Konva.Tween({
+      node: image,
+      duration: 0.8,
+      scaleX: 3,
+      scaleY: 3,
+    });
+
+    const fadeA = new Konva.Tween({
+      node: image,
+      duration: 0.2,
+      opacity: 0,
+    });
+
+    const handleDamage = () => {
+      fadeA.play();
+        fadeA.onFinish = () => {
+        this.getDamage(enemy, image, layer);
+        this.game.updateScore();
       };
-
-      image.on('pointerdblclick', handleDestroy);
     };
 
+    
+    imageObj.onload = () => {
+      image.on('pointerclick', handleDestroy);
+      
+      growA.play();
+      animation.start();
+      setTimeout(() => {
+        animation.stop()
+      }, duration / 5)
+    };
+    
     imageObj.src = `./mushrooms/${enemy.image}.png`;
+    this.stage.add(layer);
+
+    const timeout = setTimeout(handleDamage, duration / 5);
+
+    const handleDestroy = () => {
+      fadeA.play();
+      fadeA.onFinish = () => {
+        this.destroyEnemy(image, enemy, layer);
+        image.off('pointerclick', handleDestroy);
+        clearTimeout(timeout);
+        this.game.updateScore(enemy.bonus);
+      }
+    };
 
   };
 
-  destroyEnemy = (obj: Konva.Image, enemyId: string) => {
+  getDamage = (enemy: EnemyT, image: Konva.Image, layer: Konva.Layer) => {
+    this.game.score.health = this.game.score.health - enemy.hit;
+    this.destroyEnemy(image, enemy, layer);
+  }
+  
+  destroyEnemy = (obj: Konva.Image, enemy: EnemyT, layer: Konva.Layer) => {
     obj.destroy();
-    this.game.clearOccupiedAreas(enemyId);
+    layer.remove();
+    this.game.clearOccupiedAreas(enemy.id);
     this.game.populateEnemiesLoop();
   }
 
@@ -103,7 +160,10 @@ export class Environment {
     return this.stage;
   }
 
-  get envLayer() {
-    return this.layer;
+  stopLooping = () => {
+    if (!this.loop) {
+      return;
+    }
+    clearInterval(this.loop);
   }
 }
