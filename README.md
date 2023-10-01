@@ -10,3 +10,6 @@ Open `http://localhost:8080/`
 
 # Deploy
 Go to Yandex.cloud in `nda-rider` bucket and do stuff.
+
+# Demo 
+https://nda-rider.website.yandexcloud.net/
