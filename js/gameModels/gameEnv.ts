@@ -108,7 +108,16 @@ export class Environment {
       };
     };
 
-    
+    const handleDestroy = () => {
+      fadeA.play();
+      fadeA.onFinish = () => {
+        this.destroyEnemy(image, enemy, layer);
+        image.off('pointerclick', handleDestroy);
+        clearTimeout(timeout);
+        this.game.updateScore(enemy.bonus);
+      }
+    };
+
     imageObj.onload = () => {
       image.on('pointerclick', handleDestroy);
       
@@ -124,15 +133,7 @@ export class Environment {
 
     const timeout = setTimeout(handleDamage, duration / 5);
 
-    const handleDestroy = () => {
-      fadeA.play();
-      fadeA.onFinish = () => {
-        this.destroyEnemy(image, enemy, layer);
-        image.off('pointerclick', handleDestroy);
-        clearTimeout(timeout);
-        this.game.updateScore(enemy.bonus);
-      }
-    };
+    
 
   };
 

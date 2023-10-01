@@ -46,7 +46,7 @@ const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
     playbackSpeed: 1.0,
     maxEnemies: 1,
     enemyFrequency: 10 * 1000,
-    hit: 65,
+    hit: 7,
   },
   [GameSpeedEnum.x2]: {
     playbackSpeed: 2.0,
