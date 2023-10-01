@@ -8,6 +8,12 @@ body {
   left: 0;
   z-index: 5;
 }
+#score {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+}
 
 .gameHeader, .gameTotal {
   color: #fff;

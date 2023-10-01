@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid'
 import { VideoBg } from './videoBg';
 import { Intro } from './intro';
 import { GameStats } from './gameStats';
+import { GameTotal } from './gameTotal';
 import { Environment } from './gameEnv'; 
 import { Score } from './score';
 import { EnemyT } from './enemy';
@@ -76,6 +77,7 @@ export class Game {
   width: number;
   height: number;
   score: GameScoreT;
+  total: GameTotal;
   occupiedAreas: Record<string, GameObjectCircleAreaT>;
   enemiesQueue: Record<string, EnemyT>;
 
@@ -93,6 +95,7 @@ export class Game {
     this.lifesycleState = GameLifesycleEnum.starting;
     this.isPaused = false;
     this.stats = new GameStats(width, height, this.score);
+    this.total = new GameTotal(width, height, this.score);
     this.env = new Environment(width, height, this.hitAxisHeight, this);
     this.bg = new VideoBg(width, height);
     this.intro = new Intro(width, height);
@@ -112,8 +115,10 @@ export class Game {
     this.isPaused = false;
     this.bg.initialize();
     this.stats.initialize();
+    this.total.initialize();
     this.env.initialize();
     this.stats.renderHealth();
+    this.total.renderTotal();
     this.bg.play();
     this.lifesycleState = GameLifesycleEnum.playing;
     this.populateEnemiesLoop();
@@ -218,6 +223,7 @@ export class Game {
       this.score.total += amount;
     }
     this.stats.renderHealth();
+    this.total.renderTotal();
   }
 
   stopGame = () => {

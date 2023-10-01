@@ -1,4 +1,5 @@
 import { GameScoreT } from './game';
+import Konva from 'konva';
 export class GameStats {
   private canvas: HTMLCanvasElement;
   private heartSprite: HTMLImageElement;
@@ -70,7 +71,7 @@ export class GameStats {
 
     const health =  this.score.health < 0 ? 0 : this.score.health;
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.clearRect(100, 0, this.canvas.width - 100, this.canvas.height);
     this.drawSprite(this.heartSprite, spriteOffsetX, 0, heartFrameW, heartFrameH, heartPosX, heartPosY, heartW, heartH);
     this.ctx.fillText(`${health.toString()}%`, heartPosX - 5 , heartPosY + 45);
   }
