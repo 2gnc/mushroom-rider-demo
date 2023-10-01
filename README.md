@@ -1,9 +1,7 @@
 # Run for dev
-Install dependencies:
-```
-```
-Run `npm run dev`
-Open `http://localhost:8080/`
+* Install dependencies: `npm ci`
+* Run `npm run dev`
+* Open `http://localhost:8080/`
 
 # Build
 `npm run build`
