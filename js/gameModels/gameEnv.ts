@@ -3,11 +3,12 @@ import filter from 'lodash/filter';
 import forEach from 'lodash/forEach';
 import chain from 'lodash/chain';
 import map from 'lodash/map';
+import size from 'lodash/size';
 import values from 'lodash/values';
 
 import { Game, EnemyT } from './game';
 
-export const ENEMY_UPDATE_INTERVAL = 500;
+export const ENEMY_UPDATE_INTERVAL = 1000;
 
 export class Environment {
   private canvas: HTMLCanvasElement;
@@ -29,6 +30,8 @@ export class Environment {
     });
     this.layer = new Konva.Layer();
     this.game = game;
+
+    this.stage.add(this.layer);
   }
   
   initialize() {
@@ -41,11 +44,8 @@ export class Environment {
   queueEnemiesToRender = () => {
     const toRender = filter(values(this.game.enemiesQueue), (enemy) => !enemy.isQueuedToRender);
 
-    forEach(toRender, (enemy) => {
-      enemy.isQueuedToRender = true;
-    })
-
     forEach(toRender, async (enemy) => {
+      enemy.isQueuedToRender = true;
       const promise = new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve();
@@ -57,8 +57,33 @@ export class Environment {
 
   renderEnemy = (enemy: EnemyT) => {
     this.game.enemiesQueue[enemy.id].isRendered = true;
-    console.log( enemy );
+
+    const imageObj = new Image();
+    imageObj.onload = () => {
+      const image = new Konva.Image({
+        x: enemy.sX,
+        y: enemy.sY,
+        image: imageObj,
+        width: 55,
+        height: 55,
+        draggable: true,
+      });
+      this.layer.add(image);
+      image.on('pointerdblclick', () => {
+        this.destroyEnemy(enemy.id, image);
+      })
+    };
+
+    imageObj.src = `./mushrooms/${enemy.image}.png`;
+
   };
+
+  destroyEnemy = (id: string, obj: Konva.Image) => {
+    obj.destroy();
+    delete this.game.enemiesQueue[id];
+    console.log(size(this.game.enemiesQueue));
+    this.game.populateEnemiesLoop();
+  }
 
   get ctx() {
     const context = this.canvas.getContext('2d');

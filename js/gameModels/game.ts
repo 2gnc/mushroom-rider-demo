@@ -34,6 +34,7 @@ export type EnemyT = {
   spawnTimeout: number;
   isQueuedToRender: boolean;
   isRendered: boolean;
+  image: string;
 }
 
 export type GameScoreT = {
@@ -70,8 +71,8 @@ const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
   },
 };
 
-const HIT_AREA_HEIGHT = 0.25;
-const ENEMY_RADIUS = 20;
+const HIT_AREA_HEIGHT = 0.1;
+const ENEMY_RADIUS = 25;
 
 export class Game {
   lifesycleState: GameLifesycleEnum;
@@ -127,27 +128,30 @@ export class Game {
   }
 
   populateEnemiesLoop = (): void => {
-    let remainsToGenerate = ENEMIES_SETTINGS[this.score.speed].maxEnemies;
-
+    let remainsToGenerate = ENEMIES_SETTINGS[this.score.speed].maxEnemies - size(this.enemiesQueue);
+    if (size(this.enemiesQueue) > ENEMIES_SETTINGS[this.score.speed].maxEnemies) {
+      return;
+    }
     while (remainsToGenerate > 0) {
+      remainsToGenerate = remainsToGenerate - 1;
       const area = this.enemySpawnArea;
+      const spawnTimeout = remainsToGenerate === ENEMIES_SETTINGS[this.score.speed].maxEnemies ? 40 : random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency);
+  
       const enemy: EnemyT = {
         id: nanoid(),
         hit: ENEMIES_SETTINGS[this.score.speed].hit,
         speed: this.score.speed,
         sX: area.x,
         sY: area.y,
-        spawnTimeout: random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency),
+        spawnTimeout,
         isQueuedToRender: false,
         isRendered: false,
+        image: random(1, 50).toString(),
       }
 
       this.occupiedAreas.push(area);
       this.enemiesQueue[enemy.id] = enemy;
-      remainsToGenerate --;
     }
-
-    console.log(this.enemiesQueue);
   }
 
   pause = () => {
@@ -189,8 +193,8 @@ export class Game {
 
   buildRandomSpawnPoint(): GameObjectCoordsT {
     return {
-      x: random(0, this.width - ENEMY_RADIUS / 2),
-      y: random(ENEMY_RADIUS / 2, this.hitAxisHeight),
+      x: random(ENEMY_RADIUS * 1.5, this.width - ENEMY_RADIUS * 1.5),
+      y: random(this.width * 0.6, this.hitAxisHeight - 100),
     }
   }
 
