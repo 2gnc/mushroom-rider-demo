@@ -1,6 +1,7 @@
 import size from 'lodash/size';
 import random from 'lodash/random';
 import some from 'lodash/some';
+import values from 'lodash/values';
 
 import { nanoid } from 'nanoid'
 
@@ -84,7 +85,7 @@ export class Game {
   width: number;
   height: number;
   score: GameScoreT;
-  occupiedAreas: Array<GameObjectCircleAreaT>;
+  occupiedAreas: Record<string, GameObjectCircleAreaT>;
   enemiesQueue: Record<string, EnemyT>;
 
   constructor(
@@ -105,7 +106,7 @@ export class Game {
       health: 100,
     };
     this.enemiesQueue = {};
-    this.occupiedAreas = [];
+    this.occupiedAreas = {};
   } 
 
   initialize() {
@@ -128,17 +129,19 @@ export class Game {
   }
 
   populateEnemiesLoop = (): void => {
+    console.log('populateEnemiesLoop')
     let remainsToGenerate = ENEMIES_SETTINGS[this.score.speed].maxEnemies - size(this.enemiesQueue);
-    if (size(this.enemiesQueue) > ENEMIES_SETTINGS[this.score.speed].maxEnemies) {
+    if (size(this.enemiesQueue) >= ENEMIES_SETTINGS[this.score.speed].maxEnemies) {
       return;
     }
     while (remainsToGenerate > 0) {
       remainsToGenerate = remainsToGenerate - 1;
       const area = this.enemySpawnArea;
       const spawnTimeout = remainsToGenerate === ENEMIES_SETTINGS[this.score.speed].maxEnemies ? 40 : random(0, ENEMIES_SETTINGS[this.score.speed].enemyFrequency);
-  
+      const enemyId = nanoid();
+
       const enemy: EnemyT = {
-        id: nanoid(),
+        id: enemyId,
         hit: ENEMIES_SETTINGS[this.score.speed].hit,
         speed: this.score.speed,
         sX: area.x,
@@ -149,7 +152,7 @@ export class Game {
         image: random(1, 50).toString(),
       }
 
-      this.occupiedAreas.push(area);
+      this.occupiedAreas[enemyId] = area;
       this.enemiesQueue[enemy.id] = enemy;
     }
   }
@@ -185,6 +188,7 @@ export class Game {
 
   buildEnemyArea = (): GameObjectCircleAreaT => {
     const point = this.buildRandomSpawnPoint();
+
     return {
     ...point,
     radius: ENEMY_RADIUS,
@@ -199,6 +203,10 @@ export class Game {
   }
 
   checkIsPointOccupied(area: GameObjectCircleAreaT): boolean {
-    return some(this.occupiedAreas, (occupiedArea) => checkIsSirclesIntersected(occupiedArea, area));
+    return some(values(this.occupiedAreas), (occupiedArea) => checkIsSirclesIntersected(occupiedArea, area));
+  }
+
+  clearOccupiedAreas = (enemyId: string): void => {
+    delete this.occupiedAreas[enemyId];
   }
 }

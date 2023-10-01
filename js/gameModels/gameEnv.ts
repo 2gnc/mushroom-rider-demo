@@ -43,20 +43,24 @@ export class Environment {
 
   queueEnemiesToRender = () => {
     const toRender = filter(values(this.game.enemiesQueue), (enemy) => !enemy.isQueuedToRender);
+    if (!size(toRender)) {
+      return;
+    }
 
-    forEach(toRender, async (enemy) => {
+    forEach(toRender, (enemy) => {
       enemy.isQueuedToRender = true;
       const promise = new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve();
         }, enemy.spawnTimeout)
       });
-      await promise.then(() => this.renderEnemy(enemy));
+      promise.then(() => this.renderEnemy(enemy));
     })
   }
 
   renderEnemy = (enemy: EnemyT) => {
     this.game.enemiesQueue[enemy.id].isRendered = true;
+    delete this.game.enemiesQueue[enemy.id];
 
     const imageObj = new Image();
     imageObj.onload = () => {
@@ -66,22 +70,24 @@ export class Environment {
         image: imageObj,
         width: 55,
         height: 55,
-        draggable: true,
       });
       this.layer.add(image);
-      image.on('pointerdblclick', () => {
-        this.destroyEnemy(enemy.id, image);
-      })
+
+      const handleDestroy = () => {
+        this.destroyEnemy(image, enemy.id);
+        image.off('pointerdblclick', handleDestroy);
+      };
+
+      image.on('pointerdblclick', handleDestroy);
     };
 
     imageObj.src = `./mushrooms/${enemy.image}.png`;
 
   };
 
-  destroyEnemy = (id: string, obj: Konva.Image) => {
+  destroyEnemy = (obj: Konva.Image, enemyId: string) => {
     obj.destroy();
-    delete this.game.enemiesQueue[id];
-    console.log(size(this.game.enemiesQueue));
+    this.game.clearOccupiedAreas(enemyId);
     this.game.populateEnemiesLoop();
   }
 
