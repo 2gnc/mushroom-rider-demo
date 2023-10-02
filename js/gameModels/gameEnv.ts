@@ -4,7 +4,7 @@ import forEach from 'lodash/forEach';
 import size from 'lodash/size';
 import values from 'lodash/values';
 
-import { Game } from './game';
+import { Game, GameLifesycleEnum } from './game';
 import { EnemyT } from './enemy';
 
 export const ENEMY_UPDATE_INTERVAL = 1000;
@@ -56,6 +56,9 @@ export class Environment {
   }
 
   renderEnemy = (enemy: EnemyT) => {
+    if (this.game.lifesycleState !== GameLifesycleEnum.playing) {
+      return;
+    }
     this.game.enemiesQueue[enemy.id].isRendered = true;
     delete this.game.enemiesQueue[enemy.id];
 
@@ -166,5 +169,6 @@ export class Environment {
       return;
     }
     clearInterval(this.loop);
+    this.loop = null;
   }
 }

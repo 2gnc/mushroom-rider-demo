@@ -45,7 +45,7 @@ export type EnemySpawnSettingT = {
 const ENEMIES_SETTINGS: Record<GameSpeedEnum, EnemySpawnSettingT> = {
   [GameSpeedEnum.x1]: {
     playbackSpeed: 1.0,
-    maxEnemies: 1,
+    maxEnemies: 10,
     enemyFrequency: 10 * 1000,
     hit: 7,
   },
@@ -230,6 +230,8 @@ export class Game {
     this.lifesycleState = GameLifesycleEnum.score;
     this.bg.pause();
     this.env.stopLooping();
+    this.enemiesQueue = {};
+    this.occupiedAreas = {};
     const scoreScreen = new Score(this.width, this.height, this.score);
     scoreScreen.initialize();
     scoreScreen.drawScore();
