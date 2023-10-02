@@ -232,7 +232,7 @@ export class Game {
     this.env.stopLooping();
     this.enemiesQueue = {};
     this.occupiedAreas = {};
-    const scoreScreen = new Score(this.width, this.height, this.score);
+    const scoreScreen = new Score(this.width, this.height);
     scoreScreen.initialize();
     scoreScreen.drawScore();
   }

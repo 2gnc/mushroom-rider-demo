@@ -141,6 +141,9 @@ export class Environment {
   };
 
   getDamage = (enemy: EnemyT, image: Konva.Image, layer: Konva.Layer) => {
+    try {
+      window.navigator.vibrate(100)
+    } catch (e) {}
     this.game.score.health = this.game.score.health - enemy.hit;
     this.destroyEnemy(image, enemy, layer);
   }

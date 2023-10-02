@@ -25,6 +25,19 @@ body {
   font-size: 2rem;
   font-weight: bold;
   font-family: monospace;
+  text-align: center;
+}
+
+.gameSubheader {
+  color: #fff;
+  position: absolute;
+  z-index: 999;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: 1.5rem;
+  font-family: monospace;
+  text-align: center;
 }
 
 .gameTotal {  
@@ -34,7 +47,7 @@ body {
 .startButton {
   position: absolute;
   z-index: 999;
-  top: 50%;
+  top: 70%;
   left: 50%;
   transform: translate(-50%, 0);
   background: transparent;
@@ -42,8 +55,9 @@ body {
   border: 2px solid #fff;
   margin-bottom: 10px;
   color: #fff;
-  ont-size: 1.5rem;
+  font-size: 1rem;
   font-family: monospace;
+  font-weight: bold;
 }
 
 .gameStats {
